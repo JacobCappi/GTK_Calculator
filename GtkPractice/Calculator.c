@@ -5,10 +5,16 @@
 // most likely due to binary and leading bit and whatnot, but
 // don't know how to do that yet.
 
-// global b/c I couldn't figure out how to pass arguments in Callback()
-static GtkWidget *screen, *num1, *num2;
+// global b/c I couldn't figure out how to safely pass an updating
+// local screen 
+static GtkWidget *screen; 
+static char num1[12], num2[12]; 
 
+// Global counter var for num1 & num2 for %2,
+// num1 and num2 are the registers on calcs
 static int counter;
+
+// Declarations
 static void activateWindow(GtkApplication *app, gpointer user_data);
 static void addNumberToBuffer(GtkButton *num, unsigned int data);
 
@@ -54,6 +60,8 @@ static void activateWindow(GtkApplication *app, gpointer user_data){
     // Not sure if there is a better way because this way sucks...
     // but, here is a manual creation of all the Calc buttons
     screen = gtk_label_new(" ");
+    *num1 = '\0';
+    *num2 = '\0';
 
     zero = gtk_button_new_with_label("0");
     one = gtk_button_new_with_label("1");
@@ -72,8 +80,8 @@ static void activateWindow(GtkApplication *app, gpointer user_data){
     mult = gtk_button_new_with_label("*");
     sub= gtk_button_new_with_label("-");
     add = gtk_button_new_with_label("+");
-
     power = gtk_button_new_with_label("^");
+
     eClear = gtk_button_new_with_label("ec");
     clear = gtk_button_new_with_label("c");
 
@@ -95,8 +103,8 @@ static void activateWindow(GtkApplication *app, gpointer user_data){
     gtk_grid_attach(GTK_GRID(grid), mult, 3, 2, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), sub, 3, 3, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), add, 3, 4, 1, 2);
-
     gtk_grid_attach(GTK_GRID(grid), power, 2, 1, 1, 1);
+
     gtk_grid_attach(GTK_GRID(grid), eClear, 1, 1, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), clear, 0, 1, 1, 1);
 
@@ -122,5 +130,18 @@ static void activateWindow(GtkApplication *app, gpointer user_data){
 
 
 static void addNumberToBuffer(GtkButton *num, unsigned int data){
-    g_print("%d", data); 
+    unsigned int tmpCounter = 0;
+    while(num1[tmpCounter] != '\0'){
+        tmpCounter++;
+    }
+    if(*(num1+tmpCounter)=='\0' && tmpCounter<12){
+        *(num1+tmpCounter+1) = *(num1+tmpCounter);
+        *(num1+tmpCounter) = data + '0'; 
+    }
+    //Janky Code with buffer manip and stuff (~_~!)
+    const char *format = "<span style=\"100\">\%s</span>";
+    char *markup = g_markup_printf_escaped (format, num1);
+    gtk_label_set_markup(GTK_LABEL (screen), markup); 
+    g_free (markup);
+
 }
